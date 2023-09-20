@@ -1,0 +1,164 @@
+Deploy TightVNC via GPO (editando MSI com ORCA)
+Deploy TightVNC via GPO (editando MSI com ORCA)
+
+Bruno GuerraBruno Guerra
+Bruno Guerra
+Analista de Redes Sr
+Publicado em 23 de mar. de 2021
++ Siga
+Caros colegas, preparei esse material para orientar na implantação de um pacote MSI via GPO, além de customizar um pacote MSI com a aplicação ORCA. No nosso caso, vamos customizar a instalação do TightVNC.
+
+A aplicação ORCA está disponível no Windows 10 SDK
+
+Link: https://developer.microsoft.com/en-us/windows/downloads/windows-10-sdk/ 
+
+Faça o download da ISO e procure pelo pacote Orca-x86_en-us.msi
+
+Como vamos utilizar o TightVNC, realizamos o download no site do fabricante
+
+https://www.tightvnc.com/download.php 
+
+No alt text provided for this image
+  Clique com o botão direito no pacote MSI e escolha a opção “Edit With Orca”
+
+No alt text provided for this image
+ 
+
+No Menu superior, em Transform, clique na opção “New Transform”, agora podemos customizar o pacote
+
+No alt text provided for this image
+  
+
+No TightVNC, praticamente todas as opções que vamos alterar estão na tabela Property.  
+
+No alt text provided for this image
+No nosso caso, editamos algumas chaves. 
+
+Na tabela Property
+
+SET_USECONTROLAUTHENTICATION 1 
+
+VALUE_OF_USECONTROLAUTHENTICATION = 1 
+
+SET_CONTROLPASSWORD = 1 
+
+SET_USEVNCAUTHENTICATION = 1 
+
+VALUE_OF_USEVNCAUTHENTICATION = 1 
+
+SET_PASSWORD = 1 
+
+SET_GRABTRANSPARENTWINDOWS = 1 
+
+VALUE_OF_GRABTRANSPARENTWINDOWS = 1 
+
+SET_IPACCESSCONTROL = 1 
+
+Na tabela CustomAction (definir a senha que precisará ser digitada no VNCViewer para se conectar ao computador do usuário) 
+
+SetDataForControlPasswordsActionSilently = P@ssw0rd 
+
+SetDataForPasswordsActionSilently = P@ssw0rd 
+
+Na tabela Registry (nessa chave podemos filtrar a partir de que rede o técnico poderá se conectar via VNCViewer e a opção de o usuário precisar aceitar a conexão, que se dá pelo “:2”. Como não vamos limitar a rede de origem, deixamos de 0.0.0.0 até 255.255.255.255)
+
+VALUE_OF_IPACCESSCONTROL = 0.0.0.0-255.255.255.255:2 
+
+ 
+
+Com todas as chaves customizadas, no menu Transform, clique em “Generate Tranform...”, um arquivo com extensão MST será gerado, ele servirá como complemento para o MSI, na configuração da GPO. 
+
+No alt text provided for this image
+  
+
+Os pacotes MSI e MST devem estar acessíveis para os computadores do domínio que vão receber a GPO, sendo assim, vamos colocar os arquivos na pasta compartilhada do domínio. Primeiro, copie os arquivos para uma pasta local do controlador de domínio. No controlador de domínio, copie os arquivos para: 
+
+C:\Windows\SYSVOL\domain\scripts\VNC 
+
+Recomendo criar uma pasta dentro de Scripts, para deixar mais organizado. Não tente copiar o arquivo diretamente da rede, por exemplo, do seu computador para essa pasta do controlador do domínio, o mesmo não vai permitir, por segurança. Após copiar, teste o acesso por qualquer computador do domínio. 
+
+\\contoso.com\SYSVOL\contoso.com\scripts\VNC 
+
+ Abra o Snapin de Group Policy do domínio para criar a GPO. Escolha a OU apropriada, onde os computadores alvo dessa instalação estão localizados.  
+
+O caminho é Computer Configuration > Polices > Software Settings > Software Installation 
+
+No alt text provided for this image
+ Uma caixa se abrirá para que você aponte o arquivo MSI, escolha o caminho \\contoso.com\SYSVOL\contoso.com\scripts\VNC\pacote.msi 
+
+Na caixa que se abrirá, escolha a opção Advanced 
+
+No alt text provided for this image
+
+
+No alt text provided for this image
+Na aba Modifications, clique em Add e escolha o pacote MST
+
+No alt text provided for this image
+
+
+Agora basta reiniciar o computador para que a GPO seja aplicada e a instalação realizada
+
+No alt text provided for this image
+No alt text provided for this image
+No alt text provided for this image
+ Obs: Algum usuário deve estar logado localmente para que o VNCViewer possa se conectar
+
+ Alguns links de referência: 
+
+https://www.tightvnc.com/download.php 
+
+https://www.tightvnc.com/doc/win/TightVNC_2.7_for_Windows_Installing_from_MSI_Packages.pdf 
+
+https://help.hcltechsw.com/domino/11.0.0/admin/inst_usingtransformfilesduringnotesinstallandupgrade_t.html 
+
+https://docs.microsoft.com/pt-br/troubleshoot/windows-server/group-policy/use-group-policy-to-install-software 
+
+
+15
+6 comentários
+Tony Douglas Martins Pena
+Tony Douglas Martins Pena
+Assistente de Infraestrutura PL na Amazon Aço
+
+2 sem
+
+Não foi fornecido texto alternativo para esta imagem
+Gostei
+Responder
+1  Reação
+Tony Douglas Martins Pena
+Tony Douglas Martins Pena
+Assistente de Infraestrutura PL na Amazon Aço
+
+2 sem
+
+cara excelente, me poupou muito trabalho, queria tirar só uma duvida, espero que possa me ajudar, gostaria de instalar só o server pois essa GPO é só para maquinas de usuários, desde ja agradeço o conteudo disponibilizado. 
+
+Gostei
+Responder
+1  Reação
+Raul Chiarella
+Raul Chiarella
+Analista de Sistemas | Python | Angular | Docker | DevOps | Back-End
+
+8 m
+
+Estou usando esse seu guia, consigo instalar pelo msiexec mas por algum motivo quando coloco ele na GPO, o software não instala 😥 
+
+Gostei
+Responder
+Thiago Bruno
+Thiago Bruno
+Analista de Infraestrutura Sênior | Tech Leader | DevOps | Linux | Docker | Azure | Apaixonado por tecnologia
+
+2 a
+
+Muito bom
+
+Gostei
+Responder
+1  Reação
+Ver mais comentários
+
+fonte: https://www.linkedin.com/pulse/deploy-tightvnc-via-gpo-editando-msi-com-orca-bruno-guerra/?originalSubdomain=pt
